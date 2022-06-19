@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 class DetailBookPage extends StatefulWidget {
   const DetailBookPage({Key? key, required this.isbn}) : super(key: key);
@@ -153,7 +154,16 @@ class _DetailBookPageState extends State<DetailBookPage> {
                             //   50,
                             // ),
                             ),
-                        onPressed: () {},
+                        onPressed: () async {
+                          Uri uri = Uri.parse(detailBook!.url!);
+                          try {
+                            await canLaunchUrl(uri)
+                                ? await launchUrl(uri)
+                                : debugPrint("Failed to navigate!");
+                          } catch (e) {
+                            debugPrint(e.toString());
+                          }
+                        },
                         child: Text("BUY"),
                       ),
                     ),
