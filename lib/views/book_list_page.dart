@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:book_app/controllers/book_controller.dart';
 import 'package:book_app/models/book_list_response.dart';
 import 'package:book_app/views/detail_book_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 
 class BookListPage extends StatefulWidget {
   const BookListPage({Key? key}) : super(key: key);
@@ -15,25 +17,15 @@ class BookListPage extends StatefulWidget {
 }
 
 class _BookListPageState extends State<BookListPage> {
-  BookListResponse? bookList;
-  fetchBookApi() async {
-    var url = Uri.parse('https://api.itbook.store/1.0/new');
-    var response = await http.get(url);
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final jsonBookList = jsonDecode(response.body);
-      bookList = BookListResponse.fromJson(jsonBookList);
-      setState(() {});
-    }
-  }
+  BookController? bookController;
 
   @override
   void initState() {
+    print("RUN!");
     // TODO: implement initState
     super.initState();
-    fetchBookApi();
+    bookController = Provider.of<BookController>(context, listen: false);
+    bookController!.fetchBookApi();
   }
 
   @override
@@ -42,51 +34,54 @@ class _BookListPageState extends State<BookListPage> {
       appBar: AppBar(
         title: Text("Book Catalogue"),
       ),
-      body: Container(
-        child: bookList == null
-            ? Center(child: const CircularProgressIndicator())
-            : ListView.builder(
-                itemCount: bookList!.books!.length,
-                itemBuilder: ((context, index) {
-                  final currentBook = bookList!.books![index];
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => DetailBookPage(
-                            isbn: currentBook.isbn13!,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Row(
-                      children: [
-                        Image.network(
-                          currentBook.image!,
-                          height: 100,
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(currentBook.title!),
-                                Text(currentBook.subtitle!),
-                                Align(
-                                  alignment: Alignment.topRight,
-                                  child: Text(currentBook.price!),
-                                )
-                              ],
+      body: Consumer<BookController>(
+        child: const Center(child: CircularProgressIndicator()),
+        builder: (context, value, child) => Container(
+          child: bookController!.bookList == null
+              ? child
+              : ListView.builder(
+                  itemCount: bookController!.bookList!.books!.length,
+                  itemBuilder: ((context, index) {
+                    final currentBook = bookController!.bookList!.books![index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => DetailBookPage(
+                              isbn: currentBook.isbn13!,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          Image.network(
+                            currentBook.image!,
+                            height: 100,
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(currentBook.title!),
+                                  Text(currentBook.subtitle!),
+                                  Align(
+                                    alignment: Alignment.topRight,
+                                    child: Text(currentBook.price!),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+        ),
       ),
     );
   }
